@@ -17,7 +17,9 @@ app.use(express.static("public"));
 app.use(cockieParser());
 
 // import routes
+import userRouter from "./routes/user.route.js";
 
 // use routes
+app.use("/api/v1/users", userRouter);
 
 export { app };
