@@ -24,7 +24,7 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
     }
 };
 
-const register = asyncHandler(async (req, res, next) => {
+const registerUser = asyncHandler(async (req, res, next) => {
     const { fname, lname, email, password } = req.body;
 
     if (
@@ -75,4 +75,52 @@ const register = asyncHandler(async (req, res, next) => {
         );
 });
 
-export { register };
+const loginUser = asyncHandler(async (req, res, next) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        throw new ApiError(400, "Please provide email and password");
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(401, "Invalid credentials");
+    }
+
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+        throw new ApiError(401, "Invalid credentials");
+    }
+
+    const { accessToken, refreshToken } =
+        await generateAccessTokenAndRefreshToken(user._id);
+
+    const loggedInUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    );
+
+    const option = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, option)
+        .cookie("refreshToken", refreshToken, option)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken,
+                },
+                "User logged in successfully"
+            )
+        );
+});
+
+export { registerUser, loginUser };
