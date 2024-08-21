@@ -45,7 +45,7 @@ const register = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "User already exists");
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    const avatarLocalPath = req.file?.path;
 
     let avatarCloudinary;
     if (avatarLocalPath) {
