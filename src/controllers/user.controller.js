@@ -195,4 +195,31 @@ const refreshToken = asyncHandler(async (req, res, next) => {
     }
 });
 
-export { registerUser, loginUser, logoutUser, refreshToken };
+const changePassword = asyncHandler(async (req, res, next) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        throw new ApiError(400, "Please provide current and new password");
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+
+    if (!isMatch) {
+        throw new ApiError(401, "Invalid current password");
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+export { registerUser, loginUser, logoutUser, refreshToken, changePassword };
