@@ -145,4 +145,54 @@ const logoutUser = asyncHandler(async (req, res, next) => {
         .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshToken = asyncHandler(async (req, res, next) => {
+    const incomingRefreshToken =
+        req.cookies.refreshToken || req.headers["x-refresh-token"];
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request");
+    }
+    try {
+        const decoded = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        const user = await User.findById(decoded._id);
+
+        if (!user) {
+            throw new ApiError(401, "Unauthorized");
+        }
+
+        if (user.refreshToken !== incomingRefreshToken) {
+            throw new ApiError(401, "Unauthorized");
+        }
+
+        const { accessToken, refreshToken } =
+            await generateAccessTokenAndRefreshToken(user._id);
+
+        const option = {
+            httpOnly: true,
+            secure: true,
+        };
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, option)
+            .cookie("refreshToken", refreshToken, option)
+            .json(
+                new ApiResponse(
+                    200,
+                    {
+                        accessToken,
+                        refreshToken,
+                    },
+                    "Token refreshed successfully"
+                )
+            );
+    } catch (error) {
+        throw new ApiError(401, "Unauthorized");
+    }
+});
+
+export { registerUser, loginUser, logoutUser, refreshToken };
