@@ -234,6 +234,34 @@ const getCurrentUser = asyncHandler(async (req, res, next) => {
     return res.status(200).json(new ApiResponse(200, user, "User found"));
 });
 
+const updateUser = asyncHandler(async (req, res, next) => {
+    const { fname, lname } = req.body;
+
+    if ([fname, lname].some((field) => (field === field?.trim()) === "")) {
+        throw new ApiError(400, "Please fill in all fields");
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    user.fname = fname || user.fname;
+    user.lname = lname || user.lname;
+    user.fullName = `${fname} ${lname}`;
+
+    await user.save();
+
+    const updatedUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    );
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedUser, "User updated successfully"));
+});
+
 export {
     registerUser,
     loginUser,
@@ -241,4 +269,5 @@ export {
     refreshToken,
     changePassword,
     getCurrentUser,
+    updateUser,
 };
