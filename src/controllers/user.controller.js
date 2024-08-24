@@ -223,9 +223,112 @@ const changePassword = asyncHandler(async (req, res, next) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res, next) => {
-    const user = await User.findById(req.user._id).select(
-        "-password -refreshToken -__v"
-    );
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id),
+            },
+        },
+
+        {
+            $lookup: {
+                from: "categories",
+                localField: "user",
+                foreignField: "_id",
+                as: "categories",
+                pipeline: [
+                    {
+                        $match: {
+                            owner: new mongoose.Types.ObjectId(req.user._id),
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            description: 1,
+                        },
+                    },
+
+                    {
+                        $lookup: {
+                            from: "todos",
+                            localField: "_id",
+                            foreignField: "category",
+                            as: "todos",
+                            pipeline: [
+                                {
+                                    $lookup: {
+                                        from: "users",
+                                        localField: "owner",
+                                        foreignField: "_id",
+                                        as: "owner",
+                                        pipeline: [
+                                            {
+                                                $project: {
+                                                    _id: 1,
+                                                    fname: 1,
+                                                    lname: 1,
+                                                    fullName: 1,
+                                                    username: 1,
+                                                    email: 1,
+                                                    avatar: 1,
+                                                },
+                                            },
+                                        ],
+                                    },
+                                },
+                                {
+                                    $project: {
+                                        _id: 1,
+                                        name: 1,
+                                        content: 1,
+                                        isCompleted: 1,
+                                    },
+                                },
+
+                                {
+                                    $sort: {
+                                        createdAt: -1,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+        },
+
+        {
+            $addFields: {
+                categories: {
+                    $map: {
+                        input: "$categories",
+                        as: "category",
+                        in: {
+                            _id: "$$category._id",
+                            name: "$$category.name",
+                            description: "$$category.description",
+                            todos: "$$category.todos",
+                        },
+                    },
+                },
+            },
+        },
+
+        {
+            $project: {
+                _id: 1,
+                fname: 1,
+                lname: 1,
+                fullName: 1,
+                username: 1,
+                email: 1,
+                avatar: 1,
+                categories: 1,
+            },
+        },
+    ]);
 
     if (!user) {
         throw new ApiError(404, "User not found");
