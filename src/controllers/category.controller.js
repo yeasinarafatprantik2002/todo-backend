@@ -229,10 +229,83 @@ const deleteCategory = asyncHandler(async (req, res, next) => {
     return res.status(200).json(new ApiResponse(200, {}, "Category deleted"));
 });
 
+const addTodoToCategory = asyncHandler(async (req, res, next) => {
+    const { todoId, categoryId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(todoId)) {
+        return next(new ApiError(400, "Invalid todo"));
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return next(new ApiError(400, "Invalid category"));
+    }
+
+    const category = await Category.findById(categoryId);
+
+    if (!category) {
+        return next(new ApiError(404, "Category not found"));
+    }
+
+    const todo = await Todo findById(todoId);
+
+    if (!todo) {
+        return next(new ApiError(404, "Todo not found"));
+    }
+
+    category.todos.push(todoId);
+
+    await category.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Todo added to category"));
+});
+
+const removeTodoFromCategory = asyncHandler(async (req, res, next) => {
+    const { todoId, categoryId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(todoId)) {
+        return next(new ApiError(400, "Invalid todo"));
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return next(new ApiError(400, "Invalid category"));
+    }
+
+    const category = await Category.findById(categoryId);
+
+    if (!category) {
+        return next(new ApiError(404, "Category not found"));
+    }
+
+    const todo = await Todo.findById(todoId);
+
+    if (!todo) {
+        return next(new ApiError(404, "Todo not found"));
+    }
+
+    const index = category.todos.indexOf(todoId);
+
+    if (index === -1) {
+        return next(new ApiError(400, "Todo not in category"));
+    }
+
+    category.todos.splice(index, 1);
+
+    await category.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Todo removed from category"));
+
+
+
 export {
     createCategory,
     getCategories,
     getCategoriesById,
     updateCategory,
     deleteCategory,
+    addTodoToCategory,
+    removeTodoFromCategory,
 };

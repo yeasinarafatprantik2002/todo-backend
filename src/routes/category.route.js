@@ -6,6 +6,8 @@ import {
     getCategoriesById,
     updateCategory,
     deleteCategory,
+    addTodoToCategory,
+    removeTodoFromCategory,
 } from "../controllers/category.controller.js";
 
 const router = Router();
@@ -16,5 +18,7 @@ router.get("/", verifyJWT, getCategories);
 router.get("/:id", verifyJWT, getCategoriesById);
 router.patch("/:id", verifyJWT, updateCategory);
 router.delete("/:id", verifyJWT, deleteCategory);
+router.patch("/add/:todoId/:categoryId", verifyJWT, addTodoToCategory);
+router.patch("/remove/:todoId/:categoryId", verifyJWT, removeTodoFromCategory);
 
 export default router;
