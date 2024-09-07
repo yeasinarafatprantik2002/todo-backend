@@ -246,7 +246,7 @@ const addTodoToCategory = asyncHandler(async (req, res, next) => {
         return next(new ApiError(404, "Category not found"));
     }
 
-    const todo = await Todo findById(todoId);
+    const todo = await Todo.findById(todoId);
 
     if (!todo) {
         return next(new ApiError(404, "Todo not found"));
@@ -297,8 +297,7 @@ const removeTodoFromCategory = asyncHandler(async (req, res, next) => {
     return res
         .status(200)
         .json(new ApiResponse(200, {}, "Todo removed from category"));
-
-
+});
 
 export {
     createCategory,
