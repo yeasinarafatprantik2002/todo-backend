@@ -173,4 +173,33 @@ const getCategoriesById = asyncHandler(async (req, res, next) => {
         .json(new ApiResponse(200, category, "Category retrieved"));
 });
 
-export { createCategory, getCategories, getCategoriesById };
+const updateCategory = asyncHandler(async (req, res, next) => {
+    const { name, description } = req.body;
+    const ownerId = req.user._id;
+    const categoryId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+        return next(new ApiError(400, "Invalid owner"));
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return next(new ApiError(400, "Invalid category"));
+    }
+
+    const category = await Category.findOneAndUpdate(
+        {
+            _id: categoryId,
+            owner: ownerId,
+        },
+        { name, description },
+        { new: true }
+    );
+
+    if (!category) {
+        return next(new ApiError(404, "Category not found"));
+    }
+
+    return res.status(200).json(new ApiResponse(200, {}, "Category updated"));
+});
+
+export { createCategory, getCategories, getCategoriesById, updateCategory };
