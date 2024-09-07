@@ -5,6 +5,7 @@ import {
     getCategories,
     getCategoriesById,
     updateCategory,
+    deleteCategory,
 } from "../controllers/category.controller.js";
 
 const router = Router();
@@ -14,5 +15,6 @@ router.post("/", verifyJWT, createCategory);
 router.get("/", verifyJWT, getCategories);
 router.get("/:id", verifyJWT, getCategoriesById);
 router.patch("/:id", verifyJWT, updateCategory);
+router.delete("/:id", verifyJWT, deleteCategory);
 
 export default router;

@@ -202,4 +202,37 @@ const updateCategory = asyncHandler(async (req, res, next) => {
     return res.status(200).json(new ApiResponse(200, {}, "Category updated"));
 });
 
-export { createCategory, getCategories, getCategoriesById, updateCategory };
+const deleteCategory = asyncHandler(async (req, res, next) => {
+    const ownerId = req.user._id;
+    const categoryId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+        return next(new ApiError(400, "Invalid owner"));
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return next(new ApiError(400, "Invalid category"));
+    }
+
+    const category = await Category.findById(categoryId);
+
+    if (!category) {
+        return next(new ApiError(404, "Category not found"));
+    }
+
+    if (!category.todos.length === 0) {
+        return next(new ApiError(400, "Category has todos"));
+    }
+
+    await Category.findByIdAndDelete(categoryId);
+
+    return res.status(200).json(new ApiResponse(200, {}, "Category deleted"));
+});
+
+export {
+    createCategory,
+    getCategories,
+    getCategoriesById,
+    updateCategory,
+    deleteCategory,
+};
