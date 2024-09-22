@@ -6,6 +6,7 @@ import {
     getTodo,
     updateTodo,
     deleteTodo,
+    toggleTodo,
 } from "../controllers/todo.controller.js";
 
 const router = Router();
@@ -15,5 +16,6 @@ router.get("/", verifyJWT, getTodos);
 router.get("/:id", verifyJWT, getTodo);
 router.patch("/:id", verifyJWT, updateTodo);
 router.delete("/:id", verifyJWT, deleteTodo);
+router.patch("/:id/toggle", verifyJWT, toggleTodo);
 
 export default router;

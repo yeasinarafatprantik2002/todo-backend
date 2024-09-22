@@ -41,10 +41,6 @@ const getTodos = asyncHandler(async (req, res, next) => {
                             username: 1,
                             fullName: 1,
                             avatar: 1,
-
-                            createdAt: 0,
-                            updatedAt: 0,
-                            __v: 0,
                         },
                     },
                 ],
@@ -83,7 +79,7 @@ const getTodo = asyncHandler(async (req, res, next) => {
         return next(new ApiError(404, "Todo not found"));
     }
 
-    if (todo.owner.toString() !== owner) {
+    if (todo.owner.toString() !== owner.toString()) {
         return next(
             new ApiError(403, "You are not authorized to access this todo")
         );
@@ -105,10 +101,6 @@ const getTodo = asyncHandler(async (req, res, next) => {
                             username: 1,
                             fullName: 1,
                             avatar: 1,
-
-                            createdAt: 0,
-                            updatedAt: 0,
-                            __v: 0,
                         },
                     },
                 ],
@@ -147,7 +139,7 @@ const updateTodo = asyncHandler(async (req, res, next) => {
         return next(new ApiError(404, "Todo not found"));
     }
 
-    if (todo.owner.toString() !== owner) {
+    if (todo.owner.toString() !== owner.toString()) {
         return next(
             new ApiError(403, "You are not authorized to access this todo")
         );
@@ -184,7 +176,7 @@ const deleteTodo = asyncHandler(async (req, res, next) => {
         return next(new ApiError(404, "Todo not found"));
     }
 
-    if (todo.owner.toString() !== owner) {
+    if (todo.owner.toString() !== owner.toString()) {
         return next(
             new ApiError(403, "You are not authorized to access this todo")
         );
@@ -197,4 +189,37 @@ const deleteTodo = asyncHandler(async (req, res, next) => {
     );
 });
 
-export { createTodo, getTodos, getTodo, updateTodo, deleteTodo };
+const toggleTodo = asyncHandler(async (req, res, next) => {
+    const todoId = req.params.id;
+    const owner = req.user._id;
+
+    if (!mongoose.isValidObjectId(todoId)) {
+        return next(new ApiError(400, "Invalid todo ID"));
+    }
+
+    const todo = await Todo.findById(todoId);
+
+    if (!todo) {
+        return next(new ApiError(404, "Todo not found"));
+    }
+
+    if (todo.owner.toString() !== owner.toString()) {
+        return next(
+            new ApiError(403, "You are not authorized to access this todo")
+        );
+    }
+
+    const updatedTodo = await Todo.findByIdAndUpdate(
+        todoId,
+        {
+            isCompleted: !todo.isCompleted,
+        },
+        { new: true }
+    );
+
+    res.status(200).json(
+        new ApiResponse(200, updatedTodo, "Todo updated successfully")
+    );
+});
+
+export { createTodo, getTodos, getTodo, updateTodo, deleteTodo, toggleTodo };
